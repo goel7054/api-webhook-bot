@@ -5,7 +5,7 @@ const app = express();
 app.use(bodyParser.json());
 
 app.post("/webhook", (req, res) => {
-  const intent = req.body.intent?.name;
+  const intent = req.body.intent?.name || "";
 
   let responseText = "Sorry, I didn’t understand that.";
 
@@ -13,21 +13,20 @@ app.post("/webhook", (req, res) => {
     responseText = "This API supports GET, POST, and DELETE operations.";
   }
 
-  const watsonResponse = {
+  // Return response in Watson's expected format
+  res.json({
     output: {
       generic: [
         {
           response_type: "text",
-          text: responseText,
-        },
-      ],
-    },
-  };
-
-  res.status(200).json(watsonResponse);
+          text: responseText
+        }
+      ]
+    }
+  });
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Webhook server is running on port ${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
