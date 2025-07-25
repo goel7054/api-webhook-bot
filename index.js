@@ -1,39 +1,34 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require("cors");
-
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 3000;
+
 app.use(bodyParser.json());
 
-app.get("/", (req, res) => {
-  res.send("API Webhook Bot is running.");
-});
-
 app.post("/webhook", (req, res) => {
-  const userQuery = req.body.input?.text?.toLowerCase() || "";
+  const intent = req.body.intents?.[0]?.intent || "unknown";
 
-  let responseText = "Sorry, I couldn't find the API you're asking for.";
-
-  if (userQuery.includes("/users")) {
-    responseText = "The API `GET /users` retrieves all registered users from the system. It requires admin privileges.";
-  } else if (userQuery.includes("createuser")) {
-    responseText = "The `POST /createUser` API creates a new user. Required fields: name, email, and password.";
+  let reply = "Sorry, I didn’t understand that.";
+  if (intent === "Get_API_Details") {
+    reply = "This API supports GET, POST, and DELETE operations.";
   }
 
-  return res.json({
+  res.json({
     output: {
       generic: [
         {
           response_type: "text",
-          text: responseText,
-        },
-      ],
-    },
+          text: reply
+        }
+      ]
+    }
   });
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.get("/", (req, res) => {
+  res.send("Webhook server is running!");
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
