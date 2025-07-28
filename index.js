@@ -1,35 +1,66 @@
-const express = require("express");
-const bodyParser = require("body-parser");
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
+const port = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
 app.use(bodyParser.json());
 
-app.post("/webhook", (req, res) => {
-  // 🔍 Log the full incoming webhook request from Watson Assistant
-  console.log("Received webhook call:", JSON.stringify(req.body, null, 2));
-
-  const intent = req.body.intent?.name || "";
-
-  let responseText = "Sorry, I didn’t understand that.";
-
-  if (intent === "Get_API_Details") {
-    responseText = "This API supports GET, POST, and DELETE operations.";
-  }
-
-  // ✅ Return response in Watson's expected format
-  res.json({
-    output: {
-      generic: [
-        {
-          response_type: "text",
-          text: responseText
-        }
-      ]
-    }
-  });
+app.get('/', (req, res) => {
+  res.send('Webhook server is running!');
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.post('/webhook', async (req, res) => {
+  console.log("✅ Incoming webhook request body:", JSON.stringify(req.body, null, 2));
+
+  try {
+    const intent = req.body.intent?.displayName;
+
+    if (intent === 'Get_API_Details') {
+      const response = {
+        output: {
+          generic: [
+            {
+              response_type: "text",
+              text: "Here are the details of your API:\n- Name: Weather API\n- Version: v1.0\n- Status: Active"
+            }
+          ]
+        }
+      };
+      console.log("✅ Responding with API details");
+      return res.json(response);
+    } else {
+      const fallback = {
+        output: {
+          generic: [
+            {
+              response_type: "text",
+              text: "❗ Sorry, I couldn't understand your intent."
+            }
+          ]
+        }
+      };
+      console.log("⚠️ Unknown intent:", intent);
+      return res.json(fallback);
+    }
+  } catch (error) {
+    console.error("❌ Error processing webhook:", error);
+    return res.status(500).json({
+      output: {
+        generic: [
+          {
+            response_type: "text",
+            text: "⚠️ An error occurred while processing your request."
+          }
+        ]
+      }
+    });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`🚀 Webhook server is listening on port ${port}`);
 });
